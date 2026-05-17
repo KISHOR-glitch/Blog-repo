@@ -7,6 +7,7 @@ pipeline {
         CONTAINER_NAME = 'blog-container'
         PORT = '5000'
         ENV_FILE = 'C:\\Users\\kisho\\desktop\\blog-site\\.env'
+        RENDER_DEPLOY_HOOK = 'https://api.render.com/deploy/srv-d852opcvikkc739i5ps0?key=1DzodBqv9Mc'
     }
 
     stages {
@@ -31,10 +32,7 @@ pipeline {
                 echo '========== Running SonarQube Analysis =========='
                 script {
                     try {
-                        // Get the SonarScanner tool configured in Jenkins
                         def scannerHome = tool 'SonarScanner'
-                        
-                        // Run SonarQube analysis with environment setup
                         withSonarQubeEnv() {
                             bat "${scannerHome}\\bin\\sonar-scanner.bat"
                         }
@@ -57,19 +55,27 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy Local Container') {
             steps {
-                echo '========== Deploying Container =========='
+                echo '========== Deploying Local Container =========='
                 bat 'docker stop %CONTAINER_NAME% || exit 0'
                 bat 'docker rm %CONTAINER_NAME%   || exit 0'
                 bat 'docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT% --env-file %ENV_FILE% %DOCKER_HUB_IMAGE%:latest'
+            }
+        }
+
+        stage('Deploy to Render') {
+            steps {
+                echo '========== Deploying to Render =========='
+                bat 'curl -X POST %RENDER_DEPLOY_HOOK%'
+                echo 'Render deployment triggered successfully'
             }
         }
     }
 
     post {
         success {
-            echo '✅ Build, Push and Deployment successful! App running on port 5000'
+            echo '✅ Build, Push, Local and Render Deployment successful!'
         }
         failure {
             echo '❌ Pipeline failed! Check logs above'
