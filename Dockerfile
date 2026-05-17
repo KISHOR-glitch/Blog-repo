@@ -19,8 +19,11 @@ COPY . .
 # This doesn't actually publish the port, but documents which port to expose
 EXPOSE 5000
 
-# Set environment to production
+# Set default environment variables (can be overridden at runtime)
 ENV NODE_ENV=production
+ENV PORT=5000
+ENV MONGODB_URI=mongodb+srv://kishorarjun383_db_user:1OYVXz5Il8d9aBvZ@blog-site.i5jydse.mongodb.net/?appName=blog-site
+ENV JWT_SECRET=mini_blog_jwt_secret_key_2026_secure_token_random_string_here
 
 # Health check - Docker will periodically check if the app is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
