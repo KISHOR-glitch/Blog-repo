@@ -31,10 +31,17 @@ pipeline {
                 echo '========== Running SonarQube Analysis =========='
                 script {
                     try {
-                        bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
-                        echo 'SonarQube analysis completed'
+                        // Get the SonarScanner tool configured in Jenkins
+                        def scannerHome = tool 'SonarScanner'
+                        
+                        // Run SonarQube analysis with environment setup
+                        withSonarQubeEnv() {
+                            bat "${scannerHome}\\bin\\sonar-scanner.bat"
+                        }
+                        echo 'SonarQube analysis completed successfully'
                     } catch (Exception e) {
-                        echo 'WARNING: SonarQube not available - skipping'
+                        echo 'WARNING: SonarQube analysis failed or server unavailable - continuing pipeline'
+                        echo "Error: ${e.message}"
                     }
                 }
             }
