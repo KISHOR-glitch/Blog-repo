@@ -31,38 +31,34 @@ pipeline {
             steps {
                 script {
                     echo '========== Running SonarQube Analysis =========='
-                    try {
-                        bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
-                        echo 'SonarQube analysis completed successfully'
-                    } catch (Exception e) {
-                        echo 'WARNING: SonarQube analysis skipped - server not available'
-                        echo 'Make sure SonarQube is running at http://localhost:9000'
-                        // Do not fail the build if SonarQube is not available
-                    }
+
+                    bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
                 }
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                script {
-                    echo '========== Building Docker Image =========='
+        // Docker Build stage - commented out for now
+        // stage('Docker Build') {
+        //     steps {
+        //         script {
+        //             echo '========== Building Docker Image =========='
+        //
+        //             bat "docker build -t ${DOCKER_IMAGE} ."
+        //
+        //             bat "docker tag ${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}"
+        //         }
+        //     }
+        // }
 
-                    bat "docker build -t ${DOCKER_IMAGE} ."
-
-                    bat "docker tag ${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}"
-                }
-            }
-        }
-
-        stage('Run Application') {
-            steps {
-                script {
-                    echo '========== Running Application =========='
-                    echo 'Application ready for deployment'
-                }
-            }
-        }
+        // Run Application stage - commented out for now
+        // stage('Run Application') {
+        //     steps {
+        //         script {
+        //             echo '========== Running Application =========='
+        //             echo 'Application ready for deployment'
+        //         }
+        //     }
+        // }
     }
 
     post {
