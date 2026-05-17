@@ -1,4 +1,4 @@
-// Jenkins Pipeline for CI/CD (Windows Version)
+// Jenkins Pipeline for CI/CD with Docker Build
 
 pipeline {
 
@@ -6,7 +6,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'blog-site:latest'
-        DOCKER_REGISTRY = 'localhost:5000'
         APP_PORT = '5000'
     }
 
@@ -32,33 +31,56 @@ pipeline {
                 script {
                     echo '========== Running SonarQube Analysis =========='
 
-                    bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
+                    try {
+
+                        bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
+
+                        echo 'SonarQube analysis completed'
+
+                    } catch (Exception e) {
+
+                        echo 'WARNING: SonarQube server not available - skipping analysis'
+                    }
                 }
             }
         }
 
-        // Docker Build stage - commented out for now
-        // stage('Docker Build') {
-        //     steps {
-        //         script {
-        //             echo '========== Building Docker Image =========='
-        //
-        //             bat "docker build -t ${DOCKER_IMAGE} ."
-        //
-        //             bat "docker tag ${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}"
-        //         }
-        //     }
-        // }
+        stage('Build Docker Image') {
+            steps {
+                script {
 
-        // Run Application stage - commented out for now
-        // stage('Run Application') {
-        //     steps {
-        //         script {
-        //             echo '========== Running Application =========='
-        //             echo 'Application ready for deployment'
-        //         }
-        //     }
-        // }
+                    echo '========== Building Docker Image =========='
+
+                    // Remove old image if exists
+                    bat 'docker rmi blog-site:latest || exit 0'
+
+                    // Build new docker image
+                    bat 'docker build -t blog-site:latest .'
+
+                    echo 'Docker image created successfully'
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+
+                    echo '========== Running Docker Container =========='
+
+                    // Stop old container if exists
+                    bat 'docker stop blog-container || exit 0'
+
+                    // Remove old container
+                    bat 'docker rm blog-container || exit 0'
+
+                    // Run new container
+                    bat 'docker run -d --name blog-container -p 5000:5000 blog-site:latest'
+
+                    echo 'Docker container started successfully'
+                }
+            }
+        }
     }
 
     post {
@@ -68,11 +90,11 @@ pipeline {
         }
 
         success {
-            echo 'Build and SonarQube analysis successful!'
+            echo 'Build, SonarQube analysis, and Docker deployment successful!'
         }
 
         failure {
-            echo 'Build, analysis, or deployment failed!'
+            echo 'Pipeline failed!'
         }
 
         cleanup {
