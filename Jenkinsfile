@@ -1,102 +1,69 @@
-// Jenkins Pipeline for CI/CD with Docker Build
-
 pipeline {
-
     agent any
 
     environment {
-        DOCKER_IMAGE = 'blog-site:latest'
-        APP_PORT = '5000'
+        IMAGE_NAME = 'blog-site'
+        CONTAINER_NAME = 'blog-container'
+        PORT = '5000'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
+                echo '========== Pulling Latest Code =========='
                 checkout scm
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                script {
-                    echo '========== Installing Dependencies =========='
-                    bat 'npm install'
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    echo '========== Running SonarQube Analysis =========='
-
-                    try {
-
-                        bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
-
-                        echo 'SonarQube analysis completed'
-
-                    } catch (Exception e) {
-
-                        echo 'WARNING: SonarQube server not available - skipping analysis'
-                    }
-                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
+                echo '========== Building Docker Image =========='
+                bat 'docker rmi %IMAGE_NAME%:latest || exit 0'
+                bat 'docker build -t %IMAGE_NAME%:latest .'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                echo '========== Running SonarQube Analysis =========='
                 script {
-
-                    echo '========== Building Docker Image =========='
-
-                    // Remove old image if exists
-                    bat 'docker rmi blog-site:latest || exit 0'
-
-                    // Build new docker image
-                    bat 'docker build -t blog-site:latest .'
-
-                    echo 'Docker image created successfully'
+                    try {
+                        bat 'C:\\Users\\kisho\\Downloads\\sonar-scanner-cli-8.0.1.6346-windows-x64\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
+                        echo 'SonarQube analysis completed'
+                    } catch (Exception e) {
+                        echo 'WARNING: SonarQube not available - skipping'
+                    }
                 }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Deploy Container') {
             steps {
-                script {
+                echo '========== Deploying Container =========='
+                bat 'docker stop %CONTAINER_NAME% || exit 0'
+                bat 'docker rm %CONTAINER_NAME%   || exit 0'
+                bat 'docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT% --env-file .env %IMAGE_NAME%:latest'
+            }
+        }
 
-                    echo '========== Running Docker Container =========='
-
-                    // Stop old container if exists
-                    bat 'docker stop blog-container || exit 0'
-
-                    // Remove old container
-                    bat 'docker rm blog-container || exit 0'
-
-                    // Run new container
-                    bat 'docker run -d --name blog-container -p 5000:5000 blog-site:latest'
-
-                    echo 'Docker container started successfully'
-                }
+        stage('Health Check') {
+            steps {
+                echo '========== Checking App is Running =========='
+                bat 'timeout /t 5 /nobreak'
+                bat 'docker ps --filter name=%CONTAINER_NAME% --filter status=running'
             }
         }
     }
 
     post {
-
-        always {
-            echo 'Pipeline execution completed'
-        }
-
         success {
-            echo 'Build, SonarQube analysis, and Docker deployment successful!'
+            echo '✅ Build and deployment successful! App running on port 5000'
         }
-
         failure {
-            echo 'Pipeline failed!'
+            echo '❌ Pipeline failed! Check logs above'
+            bat 'docker logs %CONTAINER_NAME% || exit 0'
         }
-
         cleanup {
             cleanWs()
         }
