@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Mini Blog</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="index.html" class="navbar-brand">📝 Mini Blog</a>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="create-blog.html" class="nav-link">Create Blog</a>
+        <a href="#" class="nav-link" id="navLogout">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container">
+    <!-- Dashboard Header -->
+    <section class="dashboard-header">
+      <h1>My Dashboard</h1>
+      <p id="welcomeMessage">Welcome back!</p>
+    </section>
+
+    <!-- User Info Card -->
+    <section class="user-info-section">
+      <div class="info-card">
+        <h2>Profile Information</h2>
+        <p><strong>Username:</strong> <span id="username">-</span></p>
+        <p><strong>Email:</strong> <span id="email">-</span></p>
+      </div>
+    </section>
+
+    <!-- My Blogs Section -->
+    <section class="my-blogs-section">
+      <div class="section-header">
+        <h2>My Blogs</h2>
+        <a href="create-blog.html" class="btn btn-primary">Create New Blog</a>
+      </div>
+
+      <!-- Blogs Grid -->
+      <div class="my-blogs-grid" id="myBlogsGrid">
+        <!-- User blogs will be inserted here by JavaScript -->
+        <p class="loading">Loading your blogs...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Mini Blog. All rights reserved.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/common.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
