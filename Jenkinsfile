@@ -43,6 +43,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 echo '========== Pushing Image to Docker Hub =========='
+                bat 'docker login -u k2027 -p Wifirit@24'
                 bat 'docker tag %IMAGE_NAME%:latest %DOCKER_HUB_IMAGE%:latest'
                 bat 'docker push %DOCKER_HUB_IMAGE%:latest'
                 echo 'Image pushed to Docker Hub successfully'
