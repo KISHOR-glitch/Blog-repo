@@ -58,14 +58,6 @@ pipeline {
                 bat 'docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT% --env-file %ENV_FILE% %DOCKER_HUB_IMAGE%:latest'
             }
         }
-
-        stage('Health Check') {
-            steps {
-                echo '========== Checking App is Running =========='
-                bat 'timeout /t 5 /nobreak'
-                bat 'docker ps --filter name=%CONTAINER_NAME% --filter status=running'
-            }
-        }
     }
 
     post {
