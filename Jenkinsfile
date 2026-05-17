@@ -3,8 +3,10 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'blog-site'
+        DOCKER_HUB_IMAGE = 'k2027/blog-site'
         CONTAINER_NAME = 'blog-container'
         PORT = '5000'
+        ENV_FILE = 'C:\\Users\\kisho\\desktop\\blog-site\\.env'
     }
 
     stages {
@@ -38,12 +40,21 @@ pipeline {
             }
         }
 
+        stage('Push to Docker Hub') {
+            steps {
+                echo '========== Pushing Image to Docker Hub =========='
+                bat 'docker tag %IMAGE_NAME%:latest %DOCKER_HUB_IMAGE%:latest'
+                bat 'docker push %DOCKER_HUB_IMAGE%:latest'
+                echo 'Image pushed to Docker Hub successfully'
+            }
+        }
+
         stage('Deploy Container') {
             steps {
                 echo '========== Deploying Container =========='
                 bat 'docker stop %CONTAINER_NAME% || exit 0'
                 bat 'docker rm %CONTAINER_NAME%   || exit 0'
-                bat 'docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT% --env-file .env %IMAGE_NAME%:latest'
+                bat 'docker run -d --name %CONTAINER_NAME% -p %PORT%:%PORT% --env-file %ENV_FILE% %DOCKER_HUB_IMAGE%:latest'
             }
         }
 
@@ -58,7 +69,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build and deployment successful! App running on port 5000'
+            echo '✅ Build, Push and Deployment successful! App running on port 5000'
         }
         failure {
             echo '❌ Pipeline failed! Check logs above'
