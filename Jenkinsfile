@@ -45,6 +45,21 @@ pipeline {
             }
         }
 
+        stage('OWASP Dependency Check') {
+            steps {
+                echo '========== Running OWASP Dependency Check =========='
+                script {
+                    try {
+                        bat 'npm audit --production --audit-level=high'
+                        echo 'Dependency check completed successfully'
+                    } catch (Exception e) {
+                        echo 'WARNING: Dependency vulnerabilities found - check npm audit report'
+                        echo "Error: ${e.message}"
+                    }
+                }
+            }
+        }
+
         stage('Push to Docker Hub') {
             steps {
                 echo '========== Pushing Image to Docker Hub =========='
@@ -82,7 +97,7 @@ pipeline {
             bat 'docker logs %CONTAINER_NAME% || exit 0'
         }
         cleanup {
-            cleanWs()
+            cleanWs()   
         }
     }
 }
