@@ -47,6 +47,19 @@ const blogSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    // Category of the blog post
+    category: {
+      type: String,
+      default: 'General',
+      trim: true,
+    },
+
+    // Tags array for blog post
+    tags: {
+      type: [String],
+      default: [],
+    },
   },
   {
     // Automatically add createdAt and updatedAt fields

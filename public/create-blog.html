@@ -21,59 +21,72 @@
 
   <!-- Main Container -->
   <main class="container">
-    <!-- Create Blog Section -->
     <section class="form-section">
       <div class="form-container">
         <h1>Create New Blog</h1>
         <p class="form-subtitle">Share your thoughts with the world</p>
 
-        <!-- Error Message -->
         <div id="errorMessage" class="alert alert-error" style="display: none;"></div>
-
-        <!-- Success Message -->
         <div id="successMessage" class="alert alert-success" style="display: none;"></div>
 
-        <!-- Blog Form -->
         <form id="createBlogForm" class="blog-form">
-          <!-- Title Field -->
+          <!-- Title -->
           <div class="form-group">
             <label for="title">Blog Title</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              placeholder="Enter blog title"
-              maxlength="200"
-              required
-            />
+            <input type="text" id="title" name="title" placeholder="Enter blog title" maxlength="200" required />
           </div>
 
-          <!-- Description Field -->
+          <!-- Category -->
           <div class="form-group">
-            <label for="description">Description (Short Summary)</label>
-            <textarea
-              id="description"
-              name="description"
-              placeholder="Write a short description of your blog"
-              rows="3"
-              maxlength="500"
-              required
-            ></textarea>
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              <option value="General">General</option>
+              <option value="Technology">Technology</option>
+              <option value="Travel">Travel</option>
+              <option value="Food">Food</option>
+              <option value="Health">Health</option>
+              <option value="Education">Education</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Sports">Sports</option>
+              <option value="Business">Business</option>
+              <option value="Lifestyle">Lifestyle</option>
+            </select>
           </div>
 
-          <!-- Content Field -->
+          <!-- Tags -->
           <div class="form-group">
-            <label for="content">Blog Content</label>
-            <textarea
-              id="content"
-              name="content"
-              placeholder="Write your full blog content here"
-              rows="10"
-              required
-            ></textarea>
+            <label for="tags">Tags <span style="font-weight:400; color:#888;">(comma separated, e.g. node, webdev)</span></label>
+            <input type="text" id="tags" name="tags" placeholder="e.g. javascript, webdev, tutorial" />
           </div>
 
-          <!-- Submit Button -->
+          <!-- Description -->
+          <div class="form-group">
+            <label for="description">Short Description</label>
+            <textarea id="description" name="description" placeholder="Write a short summary of your blog" rows="3" maxlength="500" required></textarea>
+          </div>
+
+          <!-- Rich Text Editor Toolbar -->
+          <div class="form-group">
+            <label>Blog Content</label>
+            <div class="rte-toolbar" id="rteToolbar">
+              <button type="button" class="rte-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button type="button" class="rte-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button type="button" class="rte-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+              <span class="rte-sep">|</span>
+              <button type="button" class="rte-btn" data-cmd="formatBlock" data-val="h2" title="Heading 2">H2</button>
+              <button type="button" class="rte-btn" data-cmd="formatBlock" data-val="h3" title="Heading 3">H3</button>
+              <button type="button" class="rte-btn" data-cmd="formatBlock" data-val="p" title="Paragraph">P</button>
+              <span class="rte-sep">|</span>
+              <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="Bullet List">• List</button>
+              <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="Numbered List">1. List</button>
+            </div>
+            <div id="contentEditor" class="rte-editor" contenteditable="true">
+              <p>Write your blog content here...</p>
+            </div>
+            <!-- Hidden textarea to store HTML content -->
+            <textarea id="content" name="content" style="display:none;"></textarea>
+          </div>
+
           <button type="submit" class="btn btn-primary">Create Blog</button>
           <a href="index.html" class="btn btn-secondary">Cancel</a>
         </form>
@@ -81,13 +94,12 @@
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     <p>&copy; 2026 Mini Blog. All rights reserved.</p>
   </footer>
 
-  <!-- Scripts -->
   <script src="js/common.js"></script>
+  <script src="js/rte.js"></script>
   <script src="js/blog.js"></script>
 </body>
 </html>

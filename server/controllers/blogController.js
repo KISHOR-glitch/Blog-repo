@@ -8,8 +8,22 @@ const Comment = require('../models/Comment');
 // Get all blogs (public route - anyone can view)
 const getAllBlogs = async (req, res) => {
   try {
+    const { search, category, tag } = req.query;
+
+    // Build query filter
+    let filter = {};
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (category) filter.category = { $regex: category, $options: 'i' };
+    if (tag) filter.tags = { $in: [tag] };
+
     // Find all blogs and populate author info
-    const blogs = await Blog.find()
+    const blogs = await Blog.find(filter)
       .populate('author', 'username') // Include author username
       .populate({
         path: 'comments',
@@ -62,11 +76,19 @@ const getBlogById = async (req, res) => {
 const createBlog = async (req, res) => {
   try {
     // Get blog data from request body
-    const { title, description, content } = req.body;
+    const { title, description, content, category, tags } = req.body;
 
     // Validate input
     if (!title || !description || !content) {
       return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    // Parse tags: accept comma-separated string or array
+    let parsedTags = [];
+    if (tags) {
+      parsedTags = Array.isArray(tags)
+        ? tags
+        : tags.split(',').map((t) => t.trim()).filter(Boolean);
     }
 
     // Create new blog with current user as author
@@ -74,6 +96,8 @@ const createBlog = async (req, res) => {
       title,
       description,
       content,
+      category: category || 'General',
+      tags: parsedTags,
       author: req.user.id, // User ID from JWT token
     });
 
@@ -97,7 +121,7 @@ const createBlog = async (req, res) => {
 const updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, content } = req.body;
+    const { title, description, content, category, tags } = req.body;
 
     // Find blog by ID
     const blog = await Blog.findById(id);
@@ -115,6 +139,12 @@ const updateBlog = async (req, res) => {
     blog.title = title || blog.title;
     blog.description = description || blog.description;
     blog.content = content || blog.content;
+    if (category) blog.category = category;
+    if (tags) {
+      blog.tags = Array.isArray(tags)
+        ? tags
+        : tags.split(',').map((t) => t.trim()).filter(Boolean);
+    }
 
     // Save updated blog
     await blog.save();

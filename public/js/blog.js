@@ -48,16 +48,32 @@ if (window.location.pathname.includes('index.html') || window.location.pathname.
       // Format date
       const publishDate = formatDate(blog.createdAt);
 
-      // Truncate description
-      const description = blog.description.substring(0, 150) + '...';
+      // Calculate read time (avg 200 words per minute)
+      const wordCount = (blog.content || blog.description || '').split(/\s+/).length;
+      const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
+      // Get like count from localStorage
+      const likeKey = `like_${blog._id}`;
+      const liked = localStorage.getItem(likeKey) === 'true';
+      const likeCount = parseInt(localStorage.getItem(likeKey + '_count') || '0');
+
+      // Category badge
+      const category = blog.category || 'General';
+      // Tags
+      const tags = (blog.tags || []).slice(0, 3).map(t => `<span class="tag-badge">#${escapeHtml(t)}</span>`).join(' ');
 
       // Create card HTML
       blogCard.innerHTML = `
         <div class="blog-card-header">
           <h3>${escapeHtml(blog.title)}</h3>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span class="read-time">⏱ ${readTime} min read</span>
+            <span class="category-badge">${escapeHtml(category)}</span>
+          </div>
         </div>
         <div class="blog-card-body">
           <p class="blog-description">${escapeHtml(blog.description)}</p>
+          <div class="blog-tags">${tags}</div>
           <div class="blog-meta">
             <span class="blog-author">By ${escapeHtml(blog.author.username)}</span>
             <span class="blog-date">${publishDate}</span>
@@ -65,13 +81,30 @@ if (window.location.pathname.includes('index.html') || window.location.pathname.
         </div>
         <div class="blog-card-footer">
           <button class="btn btn-primary read-more-btn" data-blog-id="${blog._id}">Read More</button>
+          <button class="btn btn-like ${liked ? 'liked' : ''}" data-blog-id="${blog._id}">
+            ${liked ? '❤️' : '🤍'} <span class="like-count">${likeCount}</span>
+          </button>
         </div>
       `;
 
-      // Add click event listener to read more button
+      // Read more button
       const readMoreBtn = blogCard.querySelector('.read-more-btn');
       readMoreBtn.addEventListener('click', () => {
         window.location.href = `blog-details.html?id=${blog._id}`;
+      });
+
+      // Like button
+      const likeBtn = blogCard.querySelector('.btn-like');
+      likeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isLiked = localStorage.getItem(likeKey) === 'true';
+        const currentCount = parseInt(localStorage.getItem(likeKey + '_count') || '0');
+        const newLiked = !isLiked;
+        const newCount = newLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
+        localStorage.setItem(likeKey, newLiked);
+        localStorage.setItem(likeKey + '_count', newCount);
+        likeBtn.classList.toggle('liked', newLiked);
+        likeBtn.innerHTML = `${newLiked ? '❤️' : '🤍'} <span class="like-count">${newCount}</span>`;
       });
 
       // Add card to grid
@@ -141,10 +174,25 @@ if (window.location.pathname.includes('create-blog.html')) {
     createBlogForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Sync RTE editor content to hidden textarea FIRST
+      const editor = document.getElementById('contentEditor');
+      const hiddenContent = document.getElementById('content');
+      if (editor && hiddenContent) {
+        hiddenContent.value = editor.innerHTML;
+      }
+
       // Get form values
-      const title = document.getElementById('title').value;
-      const description = document.getElementById('description').value;
-      const content = document.getElementById('content').value;
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const content = hiddenContent ? hiddenContent.value.trim() : '';
+      const category = document.getElementById('category') ? document.getElementById('category').value : 'General';
+      const tags = document.getElementById('tags') ? document.getElementById('tags').value : '';
+
+      // Basic validation
+      if (!title || !description || !content || content === '<p>Write your blog content here...</p>') {
+        showError('errorMessage', 'Please fill in all fields including the blog content.');
+        return;
+      }
 
       try {
         // Hide previous messages
@@ -162,6 +210,8 @@ if (window.location.pathname.includes('create-blog.html')) {
           title,
           description,
           content,
+          category,
+          tags,
         });
 
         // Show success message
@@ -180,7 +230,7 @@ if (window.location.pathname.includes('create-blog.html')) {
 
         // Reset button
         const submitBtn = createBlogForm.querySelector('button[type="submit"]');
-        submitBtn.textContent = originalText;
+        submitBtn.textContent = 'Create Blog';
         submitBtn.disabled = false;
       }
     });
@@ -320,6 +370,14 @@ if (window.location.pathname.includes('blog-details.html')) {
         `;
       }
 
+      // Read time for details page
+      const wordCount = (blog.content || '').replace(/<[^>]+>/g, '').split(/\s+/).length;
+      const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
+      // Tags HTML
+      const tagsHtml = (blog.tags || []).map(t => `<span class="tag-badge">#${escapeHtml(t)}</span>`).join(' ');
+      const categoryHtml = blog.category ? `<span class="category-badge">${escapeHtml(blog.category)}</span>` : '';
+
       const blogHTML = `
         <div class="blog-details-header">
           <h1>${escapeHtml(blog.title)}</h1>
@@ -327,15 +385,34 @@ if (window.location.pathname.includes('blog-details.html')) {
             <span class="blog-author">By ${escapeHtml(blog.author.username)}</span>
             <span class="blog-date">${publishDate}</span>
             <span class="blog-views">${blog.views} views</span>
+            <span class="blog-readtime">⏱ ${readTime} min read</span>
+            ${categoryHtml}
           </div>
+          <div class="blog-tags" style="margin-top:10px;">${tagsHtml}</div>
         </div>
         <div class="blog-details-content">
-          ${escapeHtml(blog.content)}
+          ${blog.content}
+        </div>
+        <div class="blog-copy-link">
+          <button class="btn btn-secondary" id="copyLinkBtn">🔗 Copy Link</button>
+          <span id="copyMsg" style="display:none; color:green; font-size:14px; margin-left:10px;">✅ Link copied!</span>
         </div>
         ${actionsHtml}
       `;
 
       blogContent.innerHTML = blogHTML;
+
+      // Copy link button
+      const copyLinkBtn = document.getElementById('copyLinkBtn');
+      if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            const copyMsg = document.getElementById('copyMsg');
+            copyMsg.style.display = 'inline';
+            setTimeout(() => { copyMsg.style.display = 'none'; }, 2000);
+          });
+        });
+      }
 
       // Add delete button functionality
       const deleteBtn = document.getElementById('deleteBlogBtn');
@@ -391,8 +468,10 @@ if (window.location.pathname.includes('blog-details.html')) {
 
           const commentHTML = `
             <div class="comment-item">
-              <div class="comment-author">${escapeHtml(comment.author.username)}</div>
-              <div class="comment-date">${commentDate}</div>
+              <div class="comment-header">
+                <span class="comment-author">👤 ${escapeHtml(comment.author.username)}</span>
+                <span class="comment-date">${commentDate}</span>
+              </div>
               <div class="comment-text">${escapeHtml(comment.text)}</div>
               <div class="comment-actions">
                 ${deleteBtn}
